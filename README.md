@@ -13,14 +13,17 @@ The goal of this project is to create a front-end which uses the endpoints creat
 ### Technologies
 
 - HTML5
+- CSS3
 - JavaScript ES6
 - Node 20.16.0
+- React 18
 
 ### Tools
 
 - Visual Studio Code
 - Git and GitHub
 - npm
+- Vite
 
 ## Author
 
