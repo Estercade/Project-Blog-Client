@@ -3,6 +3,7 @@ import { useOutletContext, useParams, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 
 export default function Edit() {
+  const [post, setPost] = useState("");
   const [postFormTitle, setPostFormTitle] = useState("");
   const [postFormContent, setPostFormContent] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useOutletContext();
@@ -29,12 +30,15 @@ export default function Edit() {
     })
       .then(response => {
         if (response.status === 403) {
-          navigate("/", { errorDisplay: "403: You do not have access to this file." });
+          return navigate("/", { errorDisplay: "403: You do not have access to this file." });
         }
         return response.json();
       })
       .then(response => {
-        console.log(response.title);
+        if (response === null) {
+          return navigate("/", { errorDisplay: "404: File not found." })
+        }
+        setPost(response);
         setPostFormContent(response.content);
         setPostFormTitle(response.title);
       })
@@ -55,8 +59,8 @@ export default function Edit() {
       content: postFormContent
     }
     try {
-      await fetch(apiUrl + "posts/", {
-        method: "POST",
+      await fetch(apiUrl + "posts/" + postId, {
+        method: "PUT",
         headers: {
           "Accept": "application/json",
           "Content-Type": "application/json",
@@ -65,17 +69,20 @@ export default function Edit() {
         body: JSON.stringify(data)
       })
         .then(response => {
-          console.log(response);
           if (response.status === 401) {
             localStorage.removeItem("jwt");
             setIsAuthenticated(false);
-            navigate("/login");
+            return navigate("/login");
+          }
+          if (response.status === 403) {
+            return navigate("/");
           }
           return response.json();
         })
     } catch (err) {
       console.log(err);
     }
+    return navigate("/");
   }
 
   async function handlePublishPost(e) {
@@ -86,8 +93,8 @@ export default function Edit() {
       published: true
     }
     try {
-      await fetch(apiUrl + "posts/", {
-        method: "POST",
+      await fetch(apiUrl + "posts/" + postId, {
+        method: "PUT",
         headers: {
           "Accept": "application/json",
           "Content-Type": "application/json",
@@ -99,16 +106,51 @@ export default function Edit() {
           if (response.status === 401) {
             localStorage.removeItem("jwt");
             setIsAuthenticated(false);
-            navigate("/login");
+            return navigate("/login");
+          }
+          if (response.status === 403) {
+            return navigate("/");
           }
           return response.json();
         })
         .then(response => {
-          navigate(`/posts/${response.id}`);
+          return navigate(`/posts/${response.id}`);
         })
     } catch (err) {
       console.log(err);
     }
+    return navigate("/");
+  }
+
+  async function handleDeletePost(e) {
+    e.preventDefault();
+    if (confirm("Are you sure you want to delete this post?")) {
+      try {
+        await fetch(apiUrl + "posts/" + postId, {
+          method: "DELETE",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `bearer ${localStorage.getItem("jwt")}`,
+          },
+        })
+          .then(response => {
+            if (response.status === 401) {
+              localStorage.removeItem("jwt");
+              setIsAuthenticated(false);
+              return navigate("/login");
+            }
+            if (response.status === 403) {
+              return navigate("/");
+            }
+            return response.json();
+          })
+      } catch (err) {
+        console.log(err);
+      }
+      return navigate("/");
+    }
+    return;
   }
 
   return (
@@ -124,7 +166,8 @@ export default function Edit() {
           <textarea name="postContent" id="postContent" value={postFormContent} onChange={handlePostFormContentChange}></textarea>
         </div>
         <button className="savePostButton" onClick={handleSavePost}>Save as draft</button>
-        <button className="publishPostButton" onClick={handlePublishPost}>Publish</button>
+        {!post.published && <button className="publishPostButton" onClick={handlePublishPost}>Publish</button>}
+        <button className="deletePostButton" onClick={handleDeletePost}>Delete</button>
       </form>
     </>
   )
