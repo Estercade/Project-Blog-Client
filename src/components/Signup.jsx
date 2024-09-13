@@ -3,15 +3,13 @@ import { useOutletContext, Link, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 
 export default function Signup() {
+  const [isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, apiUrl] = useOutletContext();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [errorDisplay, setErrorDisplay] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useOutletContext();
   const navigate = useNavigate();
-
-  const apiUrl = "http://localhost:3000/";
 
   function handleUsernameInputChange(e) {
     setUsername(e.target.value);

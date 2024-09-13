@@ -1,14 +1,13 @@
-import { StrictMode, useState, useEffect } from "react"
-import { createRoot } from "react-dom/client"
+import { StrictMode, useState, useEffect } from "react";
+import { createRoot, Route, Navigate } from "react-dom/client";
 import {
   createBrowserRouter,
   RouterProvider,
   Outlet
 } from "react-router-dom";
 import Index from "./components/Index.jsx";
-import About from "./components/About.jsx";
 import Posts from "./components/Posts.jsx";
-import Users from "./components/Users.jsx"
+import Users from "./components/Users.jsx";
 import Signup from "./components/Signup.jsx";
 import Login from "./components/Login.jsx";
 import Logout from "./components/Logout.jsx";
@@ -17,19 +16,18 @@ import Edit from "./components/Edit.jsx";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    console.log(isAuthenticated);
-  }, [isAuthenticated]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const apiUrl = "http://localhost:3000/";
 
   useEffect(() => {
     if (localStorage.getItem("jwt")) {
       setIsAuthenticated(true);
+      setCurrentUser(localStorage.getItem("currentUser"));
     };
   }, []);
 
   return (
-    <Outlet context={[isAuthenticated, setIsAuthenticated]} />
+    <Outlet context={[isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, apiUrl]} />
   )
 }
 
@@ -41,12 +39,6 @@ const router = createBrowserRouter([
         path: "/",
         element: (
           <Index />
-        )
-      },
-      {
-        path: "about",
-        element: (
-          <About />
         )
       },
       {
@@ -68,18 +60,10 @@ const router = createBrowserRouter([
         )
       },
       {
-        path: "users/:userId",
+        path: "users/:username",
         element: (
           <Users />
-        ),
-        children: [
-          {
-            path: "posts",
-            element: (
-              <Posts />
-            )
-          }
-        ]
+        )
       },
       {
         path: "logout",
@@ -98,7 +82,7 @@ const router = createBrowserRouter([
         element: (
           <Edit />
         )
-      }
+      },
     ]
   }
 ])

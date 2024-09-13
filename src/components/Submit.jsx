@@ -3,11 +3,11 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 
 export default function Submit() {
+  const [isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, apiUrl] = useOutletContext();
   const [postFormTitle, setPostFormTitle] = useState("");
   const [postFormContent, setPostFormContent] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useOutletContext();
+  const [errorDisplay, setErrorDisplay] = useState("");
   const navigate = useNavigate();
-  const apiUrl = "http://localhost:3000/";
 
   useEffect(() => {
     if (!isAuthenticated && !localStorage.getItem("jwt")) {
@@ -25,69 +25,85 @@ export default function Submit() {
 
   async function handleSavePost(e) {
     e.preventDefault();
-    const data = {
-      title: postFormTitle,
-      content: postFormContent
-    }
-    try {
-      await fetch(apiUrl + "posts/", {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "Authorization": `bearer ${localStorage.getItem("jwt")}`,
-        },
-        body: JSON.stringify(data)
-      })
-        .then(response => {
-          if (response.status === 401) {
-            localStorage.removeItem("jwt");
-            setIsAuthenticated(false);
-            navigate("/login");
-          }
-          return response.json();
+    if (!postFormTitle | !postFormContent) {
+      setErrorDisplay("Please fill out all the required fields.");
+    } else {
+      const data = {
+        title: postFormTitle,
+        content: postFormContent
+      }
+      try {
+        await fetch(apiUrl + "posts/", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `bearer ${localStorage.getItem("jwt")}`,
+          },
+          body: JSON.stringify(data)
         })
-    } catch (err) {
-      console.log(err);
+          .then(response => {
+            if (response.status === 401) {
+              localStorage.removeItem("jwt");
+              setIsAuthenticated(false);
+              setCurrentUser(null);
+              navigate("/login");
+            }
+            return response.json();
+          })
+      } catch (err) {
+        console.log(err);
+      }
     }
   }
 
   async function handlePublishPost(e) {
     e.preventDefault();
-    const data = {
-      title: postFormTitle,
-      content: postFormContent,
-      published: true
-    }
-    try {
-      await fetch(apiUrl + "posts/", {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "Authorization": `bearer ${localStorage.getItem("jwt")}`,
-        },
-        body: JSON.stringify(data)
-      })
-        .then(response => {
-          if (response.status === 401) {
-            localStorage.removeItem("jwt");
-            setIsAuthenticated(false);
-            navigate("/login");
-          }
-          return response.json();
+    if (!postFormTitle | !postFormContent) {
+      setErrorDisplay("Please fill out all the required fields.");
+    } else {
+      const data = {
+        title: postFormTitle,
+        content: postFormContent,
+        published: true
+      }
+      try {
+        await fetch(apiUrl + "posts/", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `bearer ${localStorage.getItem("jwt")}`,
+          },
+          body: JSON.stringify(data)
         })
-        .then(response => {
-          navigate(`/posts/${response.id}`);
-        })
-    } catch (err) {
-      console.log(err);
+          .then(response => {
+            if (response.status === 401) {
+              localStorage.removeItem("jwt");
+              setIsAuthenticated(false);
+              setCurrentUser(null);
+              navigate("/login");
+            }
+            return response.json();
+          })
+          .then(response => {
+            navigate(`/posts/${response.id}`);
+          })
+      } catch (err) {
+        console.log(err);
+      }
     }
+  }
+
+  function handleCancelPost(e) {
+    e.preventDefault();
+    navigate("/");
   }
 
   return (
     <>
       <Navbar />
+      <div className="errorDisplay">{errorDisplay}</div>
       <form action="" method="POST" className="editPostForm">
         <div className="editPostFormItem">
           <label htmlFor="postTitle">Title: </label>
@@ -99,6 +115,7 @@ export default function Submit() {
         </div>
         <button className="savePostButton" onClick={handleSavePost}>Save as draft</button>
         <button className="publishPostButton" onClick={handlePublishPost}>Publish</button>
+        <button className="cancelPostButton" onClick={handleCancelPost}>Cancel</button>
       </form>
     </>
   )

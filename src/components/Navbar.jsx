@@ -2,13 +2,12 @@ import { useState, useEffect, useContext } from "react";
 import { Outlet, useOutletContext, Link } from "react-router-dom";
 
 export default function Navbar() {
-  const [isAuthenticated, setIsAuthenticated] = useOutletContext();
+  const [isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, apiUrl] = useOutletContext();
 
   return (
     <nav>
       <Link to="/">Home</Link>
-      <Link to="/about">About</Link>
-      {isAuthenticated && <Link to="/submit">Submit a new post</Link>}
+      {isAuthenticated && <Link to="/submit">Create a new post</Link>}
       {!isAuthenticated && <Link to="/signup">Sign up</Link>}
       {!isAuthenticated && <Link to="/login">Log in</Link>}
       {isAuthenticated && <Link to="/logout">Log out</Link>}

@@ -3,12 +3,12 @@ import { useOutletContext, useParams, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 
 export default function Edit() {
+  const [isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, apiUrl] = useOutletContext();
   const [post, setPost] = useState("");
   const [postFormTitle, setPostFormTitle] = useState("");
   const [postFormContent, setPostFormContent] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useOutletContext();
+  const [errorDisplay, setErrorDisplay] = useState("");
   const navigate = useNavigate();
-  const apiUrl = "http://localhost:3000/";
   const { postId } = useParams();
 
   useEffect(() => {
@@ -54,72 +54,82 @@ export default function Edit() {
 
   async function handleSavePost(e) {
     e.preventDefault();
-    const data = {
-      title: postFormTitle,
-      content: postFormContent
-    }
-    try {
-      await fetch(apiUrl + "posts/" + postId, {
-        method: "PUT",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "Authorization": `bearer ${localStorage.getItem("jwt")}`,
-        },
-        body: JSON.stringify(data)
-      })
-        .then(response => {
-          if (response.status === 401) {
-            localStorage.removeItem("jwt");
-            setIsAuthenticated(false);
-            return navigate("/login");
-          }
-          if (response.status === 403) {
-            return navigate("/");
-          }
-          return response.json();
+    if (!postFormTitle | !postFormContent) {
+      setErrorDisplay("Please fill out all the required fields.");
+    } else {
+      const data = {
+        title: postFormTitle,
+        content: postFormContent
+      }
+      try {
+        await fetch(apiUrl + "posts/" + postId, {
+          method: "PUT",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `bearer ${localStorage.getItem("jwt")}`,
+          },
+          body: JSON.stringify(data)
         })
-    } catch (err) {
-      console.log(err);
+          .then(response => {
+            if (response.status === 401) {
+              localStorage.removeItem("jwt");
+              setIsAuthenticated(false);
+              setCurrentUser(null);
+              return navigate("/login");
+            }
+            if (response.status === 403) {
+              return navigate("/");
+            }
+            return response.json();
+          })
+      } catch (err) {
+        console.log(err);
+      }
+      return navigate("/");
     }
-    return navigate("/");
   }
 
   async function handlePublishPost(e) {
     e.preventDefault();
-    const data = {
-      title: postFormTitle,
-      content: postFormContent,
-      published: true
-    }
-    try {
-      await fetch(apiUrl + "posts/" + postId, {
-        method: "PUT",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "Authorization": `bearer ${localStorage.getItem("jwt")}`,
-        },
-        body: JSON.stringify(data)
-      })
-        .then(response => {
-          if (response.status === 401) {
-            localStorage.removeItem("jwt");
-            setIsAuthenticated(false);
-            return navigate("/login");
-          }
-          if (response.status === 403) {
-            return navigate("/");
-          }
-          return response.json();
+    if (!postFormTitle | !postFormContent) {
+      setErrorDisplay("Please fill out all the required fields.");
+    } else {
+      const data = {
+        title: postFormTitle,
+        content: postFormContent,
+        published: true
+      }
+      try {
+        await fetch(apiUrl + "posts/" + postId, {
+          method: "PUT",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `bearer ${localStorage.getItem("jwt")}`,
+          },
+          body: JSON.stringify(data)
         })
-        .then(response => {
-          return navigate(`/posts/${response.id}`);
-        })
-    } catch (err) {
-      console.log(err);
+          .then(response => {
+            if (response.status === 401) {
+              localStorage.removeItem("jwt");
+              setIsAuthenticated(false);
+              setCurrentUser(null);
+              return navigate("/login");
+            }
+            if (response.status === 403) {
+              return navigate("/");
+            }
+            return response.json();
+          })
+          .then(response => {
+            return navigate(`/posts/${response.id}`);
+          })
+      } catch (err) {
+        console.log(err);
+      }
+      return navigate("/");
     }
-    return navigate("/");
   }
 
   async function handleDeletePost(e) {
@@ -138,6 +148,7 @@ export default function Edit() {
             if (response.status === 401) {
               localStorage.removeItem("jwt");
               setIsAuthenticated(false);
+              setCurrentUser(null);
               return navigate("/login");
             }
             if (response.status === 403) {
@@ -156,6 +167,7 @@ export default function Edit() {
   return (
     <>
       <Navbar />
+      <div className="errorDisplay">{errorDisplay}</div>
       <form action="" method="POST" className="editPostForm">
         <div className="editPostFormItem">
           <label htmlFor="postTitle">Title: </label>
@@ -165,7 +177,7 @@ export default function Edit() {
           <label htmlFor="postContent">Content: </label>
           <textarea name="postContent" id="postContent" value={postFormContent} onChange={handlePostFormContentChange}></textarea>
         </div>
-        <button className="savePostButton" onClick={handleSavePost}>Save as draft</button>
+        <button className="savePostButton" onClick={handleSavePost}>Save</button>
         {!post.published && <button className="publishPostButton" onClick={handlePublishPost}>Publish</button>}
         <button className="deletePostButton" onClick={handleDeletePost}>Delete</button>
       </form>

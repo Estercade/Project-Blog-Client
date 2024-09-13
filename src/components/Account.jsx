@@ -9,6 +9,14 @@ export default function Login() {
   const [errorDisplay, setErrorDisplay] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!isAuthenticated && !localStorage.getItem("jwt")) {
+      navigate("/login");
+    } else {
+      fetchPostDetails(postId);
+    }
+  }, []);
+
   function handleUsernameInputChange(e) {
     setUsername(e.target.value);
   }
@@ -26,7 +34,6 @@ export default function Login() {
     try {
       fetch(apiUrl + "login/", {
         method: 'POST',
-        mode: "cors",
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -44,9 +51,7 @@ export default function Login() {
           // if login successful, store JWT in localStorage
           if (storageAvailable("localStorage")) {
             localStorage.setItem("jwt", response.token);
-            localStorage.setItem("currentUser", response.currentUser);
             setIsAuthenticated(true);
-            setCurrentUser(response.currentUser);
             navigate("/");
           } else {
             console.error("Local storage not available.");
@@ -57,7 +62,7 @@ export default function Login() {
     }
   }
 
-  // check if localStorage is available
+  // check if storage is available
   function storageAvailable(type) {
     let storage;
     try {
